@@ -3,372 +3,118 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>CYD Applications — Web Flasher</title>
-<meta name="description" content="Flash Cheap Yellow Display firmware straight from your browser. No installs, no drivers beyond Chrome." />
-<script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js"></script>
-<style>
-  :root {
-    color-scheme: dark;
-    --bg: #0b0d0e;
-    --bg2: #141718;
-    --panel: rgba(255,255,255,.035);
-    --border: rgba(207,139,58,.28);
-    --border-soft: rgba(255,255,255,.08);
-    --fg: #edf0f1;
-    --muted: #8b939a;
-    --accent: #cf8b3a;
-    --accent-fg: #140d04;
-    --ok: #7fae8a;
-    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, "SFMono-Regular", monospace;
-    --sans: "Segoe UI", system-ui, Arial, sans-serif;
-  }
-  * { box-sizing: border-box; }
-  html, body { overflow-x: hidden; }
-  body {
-    margin: 0;
-    font-family: var(--sans);
-    background:
-      radial-gradient(1200px 400px at 15% -10%, rgba(207,139,58,.08), transparent 60%),
-      repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, transparent 1px 28px),
-      linear-gradient(160deg, var(--bg), var(--bg2));
-    color: var(--fg);
-    min-height: 100vh;
-  }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px 60px; }
-
-  .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 22px 0;
-    border-bottom: 1px solid var(--border-soft);
-    margin-bottom: 36px;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .wordmark {
-    font-family: var(--mono);
-    font-weight: 700;
-    font-size: 15px;
-    letter-spacing: .06em;
-    color: var(--fg);
-    text-transform: uppercase;
-  }
-  .wordmark span { color: var(--accent); }
-  .topbar nav { display: flex; gap: 18px; font-size: 13px; }
-  .topbar nav a { color: var(--muted); text-decoration: none; }
-  .topbar nav a:hover { color: var(--accent); }
-
-  .hero { margin-bottom: 8px; }
-  .eyebrow {
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0 0 10px 0;
-  }
-  h1 { font-size: 32px; margin: 0 0 10px 0; letter-spacing: -.01em; }
-  .lede { color: var(--muted); font-size: 15px; max-width: 640px; line-height: 1.6; }
-
-  .notice {
-    margin-top: 20px;
-    padding: 14px 16px;
-    border-radius: 10px;
-    background: rgba(207,139,58,.08);
-    border: 1px solid var(--border);
-    color: #f0d3a6;
-    font-size: 13.5px;
-    line-height: 1.55;
-  }
-  .notice code { background: rgba(0,0,0,.35); padding: 1px 6px; border-radius: 4px; font-family: var(--mono); }
-
-  section { margin-top: 52px; }
-  .section-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
-  .section-head h2 { font-size: 20px; margin: 0; }
-  .section-head .rule { flex: 1; height: 1px; background: var(--border-soft); }
-  .section-sub { color: var(--muted); font-size: 14px; max-width: 680px; line-height: 1.6; margin: 6px 0 22px 0; }
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-  }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border-soft);
-    border-top: 2px solid var(--accent);
-    border-radius: 4px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-  }
-  .card h3 { font-size: 18px; margin: 0 0 4px 0; font-family: var(--mono); }
-  .tag {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 10.5px;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    padding: 3px 8px;
-    border-radius: 3px;
-    margin-bottom: 12px;
-    width: fit-content;
-    border: 1px solid currentColor;
-  }
-  .tag.touch { color: #7fb8d6; }
-  .tag.notouch { color: var(--ok); }
-  .card ul { margin: 8px 0 18px 0; padding-left: 18px; font-size: 13.5px; color: var(--fg); line-height: 1.65; }
-  .card ul li::marker { color: var(--accent); }
-  .card .requires { font-size: 13px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
-  .install-row { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
-  button.flash-btn {
-    padding: 12px 16px;
-    border: 1px solid var(--accent);
-    border-radius: 4px;
-    background: var(--accent);
-    color: var(--accent-fg);
-    font-weight: 700;
-    font-family: var(--mono);
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: .03em;
-    cursor: pointer;
-    width: 100%;
-  }
-  button.flash-btn:hover { filter: brightness(1.1); }
-  .unsupported, .not-allowed {
-    font-size: 13px;
-    color: #ffb4b4;
-    background: rgba(255,80,80,.08);
-    border: 1px solid rgba(255,80,80,.3);
-    border-radius: 6px;
-    padding: 10px 12px;
-  }
-
-  .panel-2col {
-    display: grid;
-    grid-template-columns: 1.1fr .9fr;
-    gap: 16px;
-  }
-  @media (max-width: 720px) { .panel-2col { grid-template-columns: 1fr; } }
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--border-soft);
-    border-radius: 4px;
-    padding: 22px;
-  }
-  .panel h3 {
-    font-family: var(--mono);
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    color: var(--accent);
-    margin: 0 0 12px 0;
-  }
-  .panel p { font-size: 14px; color: var(--fg); line-height: 1.65; margin: 0 0 10px 0; }
-  .panel p:last-child { margin-bottom: 0; }
-  .panel .muted { color: var(--muted); font-size: 13px; }
-  .kv { list-style: none; margin: 0; padding: 0; font-size: 14px; }
-  .kv li { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border-soft); }
-  .kv li:last-child { border-bottom: none; }
-  .kv .k { font-family: var(--mono); color: var(--muted); min-width: 84px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding-top: 2px; }
-  .kv a { color: var(--accent); text-decoration: none; }
-  .kv a:hover { text-decoration: underline; }
-  .paypal-box {
-    margin-top: 14px;
-    padding: 12px 14px;
-    background: rgba(255,255,255,.03);
-    border: 1px dashed var(--border);
-    border-radius: 6px;
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--fg);
-  }
-
-  footer {
-    margin-top: 56px;
-    padding-top: 22px;
-    border-top: 1px solid var(--border-soft);
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.7;
-  }
-  footer .signature { font-family: var(--mono); color: var(--fg); margin-bottom: 6px; }
-  footer a { color: var(--accent); }
-</style>
+<title>CYD Applications — The App Store for Cheap Yellow Display</title>
+<meta name="description" content="Discover, install, and enjoy professionally built ESP32 Cheap Yellow Display applications — no code, no drivers, just a browser." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
+<link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div class="wrap">
 
-  <div class="topbar">
-    <div class="wordmark">CYD <span>Applications</span></div>
-    <nav>
-      <a href="#rolling-clock">Rolling Clock</a>
-      <a href="#support">Support</a>
-      <a href="#premium">Premium</a>
-    </nav>
-  </div>
-
-  <div class="hero">
-    <p class="eyebrow">Web-based firmware installer</p>
-    <h1>Flash it. Don't fight your toolchain.</h1>
-    <p class="lede">
-      A growing set of applications for the ESP32 Cheap Yellow Display, installable straight
-      from this page over USB — no PlatformIO, no Arduino IDE, no drivers beyond a Chromium
-      browser. Pick an application below, click Install, done.
-    </p>
-    <div class="notice">
-      <strong>Browser requirement:</strong> works in <strong>Chrome, Edge, or Opera on
-      desktop</strong> only (Windows/macOS/Linux/ChromeOS) — it runs on the Web Serial API,
-      which Firefox, Safari, and mobile browsers don't support. Plug the device in over USB
-      first, then click Install and choose its serial port when prompted.
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="dot"></span> CYD Applications</a>
+    <div class="nav-links">
+      <a href="index.html" class="active">Home</a>
+      <a href="apps.html">Applications</a>
+      <a href="apps.html#premium">Premium</a>
+      <a href="apps.html#support">Support</a>
+      <a href="apps.html" class="nav-cta">Browse Applications</a>
     </div>
   </div>
+</nav>
 
-  <section id="rolling-clock">
-    <div class="section-head">
-      <h2>Rolling Clock</h2>
-      <div class="rule"></div>
-    </div>
-    <p class="section-sub">
-      Modular clock &amp; weather firmware. Three builds, same core: pick the one that matches
-      your board and how much you're willing to pay for it.
+<header class="hero">
+  <div class="hero-bg"></div>
+  <div class="wrap">
+    <div class="eyebrow-pill hero-eyebrow">⚡ Flash straight from your browser</div>
+    <h1 class="display hero-title">The Ultimate <span class="grad">App Store</span><br />for Cheap Yellow Display</h1>
+    <p class="lede hero-lede">
+      Discover, install, and enjoy professionally built ESP32 applications without writing a
+      line of code. Pick an app, click Install, and watch it land on your device over USB —
+      right from this page.
     </p>
-
-    <div class="grid">
-
-      <div class="card">
-        <span class="tag touch">Touchscreen required</span>
-        <h3>Premium Version</h3>
-        <p class="requires">The original release: multi-provider weather with on-device screens and branding.</p>
-        <ul>
-          <li>Open-Meteo + OpenWeatherMap weather, with automatic failover</li>
-          <li>3 on-device weather screens: Now / Forecast / Stats</li>
-          <li>Custom brand name (boot screen, dashboard, web dashboard)</li>
-          <li>Web dashboard with live diagnostics (<code>/api/health</code>)</li>
-          <li>WiFi setup portal + Improv serial provisioning</li>
-        </ul>
-        <div class="install-row">
-          <esp-web-install-button manifest="manifests/premium-version.json">
-            <button slot="activate" class="flash-btn">Install</button>
-            <span slot="unsupported" class="unsupported">
-              Your browser doesn't support Web Serial. Use Chrome or Edge on desktop.
-            </span>
-            <span slot="not-allowed" class="not-allowed">
-              Web Serial needs HTTPS. You're seeing this because the page isn't served securely.
-            </span>
-          </esp-web-install-button>
-        </div>
-      </div>
-
-      <div class="card">
-        <span class="tag touch">Touchscreen required</span>
-        <h3>Premium v2</h3>
-        <p class="requires">Everything in Premium Version, plus an access-code lock, an on-device keyboard, and AI insights.</p>
-        <ul>
-          <li>Access-code gate — see "Premium" below to purchase one</li>
-          <li>On-device keyboard — edit city/brand/API keys on the touchscreen</li>
-          <li>OpenAI weather insights — tap to generate a short forecast summary</li>
-          <li>Forecast line chart (8 points) instead of plain text rows</li>
-          <li>Automatic recovery back to the primary weather provider after a fallback</li>
-        </ul>
-        <div class="install-row">
-          <esp-web-install-button manifest="manifests/v2.json">
-            <button slot="activate" class="flash-btn">Install</button>
-            <span slot="unsupported" class="unsupported">
-              Your browser doesn't support Web Serial. Use Chrome or Edge on desktop.
-            </span>
-            <span slot="not-allowed" class="not-allowed">
-              Web Serial needs HTTPS. You're seeing this because the page isn't served securely.
-            </span>
-          </esp-web-install-button>
-        </div>
-      </div>
-
-      <div class="card">
-        <span class="tag notouch">No touchscreen needed</span>
-        <h3>Premium v3 <span style="color:var(--muted); font-weight:400; font-family: var(--sans);">(Non-Touch)</span></h3>
-        <p class="requires">Same feature set as v2, built for CYD boards with no touch controller.</p>
-        <ul>
-          <li>All Premium v2 features — configured without any touch input</li>
-          <li>Access code entered over USB serial (<code>UNLOCK &lt;code&gt;</code>)</li>
-          <li>City, brand, provider, and API keys set via web dashboard / WiFi portal</li>
-          <li>Clock and weather dashboard still render and update normally</li>
-          <li>Ideal for a display-only "digital signage" style install</li>
-        </ul>
-        <div class="install-row">
-          <esp-web-install-button manifest="manifests/v3.json">
-            <button slot="activate" class="flash-btn">Install</button>
-            <span slot="unsupported" class="unsupported">
-              Your browser doesn't support Web Serial. Use Chrome or Edge on desktop.
-            </span>
-            <span slot="not-allowed" class="not-allowed">
-              Web Serial needs HTTPS. You're seeing this because the page isn't served securely.
-            </span>
-          </esp-web-install-button>
-        </div>
-      </div>
-
+    <div class="cta-row hero-cta">
+      <a class="btn btn-primary" href="apps.html">Browse Applications</a>
+      <a class="btn btn-ghost" href="apps.html#rolling-clock">Install Now</a>
+      <a class="btn btn-outline" href="apps.html#premium">Support Development</a>
+      <a class="btn btn-outline" href="https://www.youtube.com/@Smartsyncinnovations" target="_blank" rel="noopener">Watch on YouTube</a>
     </div>
-
-    <p class="section-sub" style="margin-top:20px;">
-      More CYD applications will land here over time — this hub is built to grow one card at a
-      time, not just host a single project.
+    <p class="browser-note hero-note">
+      Works in Chrome, Edge, or Opera on desktop — powered by the Web Serial API, which
+      Firefox, Safari, and mobile browsers don't support yet.
     </p>
-  </section>
+  </div>
+</header>
 
-  <section id="premium">
-    <div class="section-head">
-      <h2>Premium access</h2>
-      <div class="rule"></div>
+<section>
+  <div class="wrap">
+    <p class="section-eyebrow center">How it works</p>
+    <h2 class="section-title center">From browser tab to running firmware</h2>
+    <p class="section-lede center">No PlatformIO, no Arduino IDE, no drivers beyond what your browser already has.</p>
+    <div class="highlight-grid">
+      <div class="highlight" data-aos="fade-up" data-aos-delay="0">
+        <div class="ico">🗂️</div>
+        <h3>1. Pick an application</h3>
+        <p>Browse the showcase and choose the app and variant that matches your board and budget.</p>
+      </div>
+      <div class="highlight" data-aos="fade-up" data-aos-delay="80">
+        <div class="ico">🔌</div>
+        <h3>2. Plug in over USB</h3>
+        <p>Connect your Cheap Yellow Display, click Install, and choose its serial port when prompted.</p>
+      </div>
+      <div class="highlight" data-aos="fade-up" data-aos-delay="160">
+        <div class="ico">✅</div>
+        <h3>3. Done</h3>
+        <p>The firmware flashes directly from the page. Reboot, connect to WiFi, and you're running.</p>
+      </div>
     </div>
-    <div class="panel-2col">
-      <div class="panel">
-        <h3>How to buy a code</h3>
-        <p>
-          Premium v2 and v3 are locked behind a one-time access code until purchased. There's no
-          automated checkout here — it's a direct, manual process:
+  </div>
+</section>
+
+<section>
+  <div class="wrap glass" style="padding: 48px;">
+    <div style="display:flex; flex-wrap:wrap; gap:32px; align-items:center; justify-content:space-between;">
+      <div style="max-width:520px;" data-aos="fade-right">
+        <p class="section-eyebrow">Featured today</p>
+        <h2 class="section-title" style="margin-bottom:10px;">Rolling Clock</h2>
+        <p style="color:var(--muted); font-size:15px; line-height:1.6; margin:0 0 20px 0;">
+          Modular clock &amp; weather firmware for the Cheap Yellow Display — three variants,
+          from a free multi-provider weather clock to a fully licensed premium build with
+          on-device AI insights.
         </p>
-        <ol style="font-size:14px; line-height:1.7; padding-left:18px; margin:0 0 12px 0;">
-          <li>Send payment via <strong>PayPal</strong> to the address below.</li>
-          <li>Email or WhatsApp your payment reference / receipt.</li>
-          <li>You'll get your access code back the same way — enter it on first boot
-              (touchscreen PIN pad on v2, <code>UNLOCK &lt;code&gt;</code> over serial on v3).</li>
-        </ol>
-        <div class="paypal-box">PayPal: mwalatimo@gmail.com</div>
-        <p class="muted" style="margin-top:12px;">
-          The access code is a basic deterrent, not DRM — it confirms you went through this
-          flow, not a copy-protection scheme. Full technical detail is in each variant's own
-          README in the firmware source repo.
-        </p>
+        <a class="btn btn-primary" href="apps.html#rolling-clock">View Rolling Clock →</a>
       </div>
-      <div class="panel">
-        <h3 id="support">Support &amp; contact</h3>
-        <ul class="kv">
-          <li><span class="k">Email</span><a href="mailto:mwalatimo@gmail.com">mwalatimo@gmail.com</a></li>
-          <li><span class="k">WhatsApp</span><a href="https://wa.me/254715326414">+254 715 326 414</a></li>
-          <li><span class="k">Portfolio</span><a href="https://mwalatimothy.github.io/Portfolio-/" target="_blank" rel="noopener">mwalatimothy.github.io/Portfolio-</a></li>
-          <li><span class="k">GitHub</span><a href="https://github.com/MwalaTimothy" target="_blank" rel="noopener">MwalaTimothy</a></li>
-          <li><span class="k">LinkedIn</span><a href="https://www.linkedin.com/in/timothy-mwala" target="_blank" rel="noopener">timothy-mwala</a></li>
-          <li><span class="k">YouTube</span><a href="https://www.youtube.com/@Smartsyncinnovations" target="_blank" rel="noopener">@Smartsyncinnovations</a></li>
-          <li><span class="k">Hackster</span><a href="https://www.hackster.io/Mwala" target="_blank" rel="noopener">hackster.io/Mwala</a></li>
-        </ul>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;" data-aos="fade-left">
+        <span class="badge new">New</span>
+        <span class="badge touch">Touch &amp; non-touch builds</span>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <footer>
-    <div class="signature">Timothy Mwala — Embedded Systems Engineer</div>
-    <p>
-      After installing, connect the device to WiFi (on-screen/serial setup, or the
-      <code>CYD-Setup-XXXXXX</code> access point) and open its web dashboard to configure
-      weather, branding, and API keys. Having trouble flashing? Make sure no other program
-      (Arduino IDE, PlatformIO monitor, etc.) has the serial port open, and try a different
-      USB cable/port if the device isn't detected.
+<footer>
+  <div class="wrap">
+    <div class="foot-row">
+      <div class="signature">Timothy Mwala — Embedded Systems Engineer</div>
+      <div class="foot-links">
+        <a href="apps.html#support">Support</a>
+        <a href="apps.html#premium">Premium</a>
+        <a href="https://mwalatimothy.github.io/Portfolio-/" target="_blank" rel="noopener">Portfolio</a>
+        <a href="https://github.com/MwalaTimothy" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+    <p class="fine-print">
+      CYD Applications is an independent project, not affiliated with Espressif. Application
+      installation fees support ongoing development — see the Premium section for details.
     </p>
-  </footer>
+  </div>
+</footer>
 
-</div>
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+<script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

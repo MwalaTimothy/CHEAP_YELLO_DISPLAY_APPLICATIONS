@@ -1,15 +1,28 @@
-# CYD Applications — Web Flasher
+# CYD Applications — The App Store for Cheap Yellow Display
 
-A static, browser-based flashing hub for ESP32 Cheap Yellow Display applications. Built on
-[ESP Web Tools](https://esphome.github.io/esp-web-tools/) — visitors click Install, pick their
-device's serial port, and the firmware flashes straight from the page. No PlatformIO, no
-Arduino IDE, no drivers beyond what Chrome/Edge already have.
+A browser-based flashing hub for ESP32 Cheap Yellow Display applications, styled as a real
+product site (light theme, glassmorphism, GSAP/AOS motion) rather than a bare GitHub project
+page. Built on [ESP Web Tools](https://esphome.github.io/esp-web-tools/) — visitors click
+Install, pick their device's serial port, and the firmware flashes straight from the page. No
+PlatformIO, no Arduino IDE, no drivers beyond what Chrome/Edge already have.
 
 Live at: `https://mwalatimothy.github.io/CHEAP_YELLO_DISPLAY_APPLICATIONS/` (once GitHub Pages
 is enabled — see "Publishing" below).
 
 Built and maintained by [Timothy Mwala](https://mwalatimothy.github.io/Portfolio-/), embedded
-systems engineer. Contact/support details are on the page itself (`#support`).
+systems engineer. Contact/support details are on `apps.html#support`.
+
+## Pages
+
+- **`index.html`** — Home. Hero, "how it works" (3-step install flow), a Rolling Clock teaser
+  card linking into the showcase.
+- **`apps.html`** — Application Showcase. Searchable/filterable catalog (currently just Rolling
+  Clock's 3 variants), Premium access (manual PayPal purchase flow), Support & contact.
+
+Everything else from the original site-relaunch brief (About CYD, Why This Platform, How It
+Works as its own page, Supported Hardware, Project Gallery, Community, Roadmap, About The
+Developer, Partners, Compare Applications, News, Success Stories, etc.) is **intentionally not
+built yet** — see "Deferred pages" below.
 
 ## Using it
 
@@ -27,20 +40,38 @@ Modular clock/weather firmware, offered as three variants:
 | Premium v2 | Yes | Adds access-code lock, on-device keyboard, OpenAI insights, forecast chart, provider auto-recovery |
 | Premium v3 | No | Same as v2, built for boards with no touch controller — configured via serial + web dashboard |
 
-Premium v2/v3 are locked behind a one-time access code, purchased manually via PayPal — see the
-page's "Premium access" section for the exact flow. There's no payment gateway integration here,
-it's a direct pay-then-get-a-code process (details on the page, not repeated here since the
-contact/payment info is the kind of thing that changes without a code change).
+Premium v2/v3 are locked behind a one-time access code, purchased manually via PayPal — see
+`apps.html#premium` for the exact flow. There's no payment gateway integration here, it's a
+direct pay-then-get-a-code process.
+
+## Deferred pages — and why
+
+The original design brief for this site asks for ~15 pages: About CYD, Why This Platform, How
+It Works, Supported Hardware, Project Gallery, Community, Support Development, Roadmap, About
+The Developer, Partners, Compare Applications, News, and **Success Stories** (customer
+testimonials, install statistics, before/after photos).
+
+Only Home + Application Showcase are built in this pass, deliberately:
+
+- It's a multi-week build across the full brief; scoping to two pages first keeps this
+  reviewable and lets the direction get validated before going further.
+- **Success Stories / Community / Partners / News specifically won't be built with fabricated
+  content.** This repo has zero real installs, testimonials, or partners right now. Presenting
+  invented numbers or quotes as real is misleading to visitors — the brief's own stated purpose
+  for Success Stories is literally "convince visitors this platform is actively used," which is
+  exactly the kind of claim that needs to be true. When there's real content (actual users,
+  actual testimonials), these pages are straightforward to add using the same
+  `styles.css`/`app.js` design system already in place.
 
 ## Adding future applications
 
-This repo is meant to grow beyond Rolling Clock. To add a new CYD application:
+To add a new CYD application to the showcase:
 
-1. Add a new `<section>` to `index.html` (copy the `#rolling-clock` section as a template) with
-   its own card grid.
+1. Add a new `<div class="app-card glass" data-app-card data-category="…" data-search="…">`
+   block to `apps.html` (copy an existing Rolling Clock card as a template).
 2. Add a manifest per new variant under `manifests/`.
 3. Add the corresponding `firmware.merged.bin` under `firmware/<app-name>/<variant>/`.
-4. Link the new section from the top nav.
+4. Add any new category to the chip row (`[data-chip]`) if it doesn't already exist.
 
 ## Publishing (GitHub Pages)
 
@@ -53,7 +84,12 @@ This repo is meant to grow beyond Rolling Clock. To add a new CYD application:
 
 Each variant's PlatformIO project already has a `merge_bin.py` post-build script that produces
 `firmware.merged.bin` (bootloader + partitions + app combined at their correct flash offsets) —
-that's the exact file format ESP Web Tools expects, pointed at from `offset: 0` in each manifest.
+that's the exact file format ESP Web Tools expects.
+
+**Important:** manifest `path` values are resolved relative to the *manifest file's own URL*,
+not the page's URL (this caused a 404 in an earlier version of this repo). Manifests live under
+`manifests/`, so paths must climb back out with `../` — e.g.
+`"../firmware/v2/firmware.merged.bin"`, not `"firmware/v2/firmware.merged.bin"`.
 
 To ship a new build:
 
@@ -70,7 +106,10 @@ To ship a new build:
 ## Repo layout
 
 ```
-index.html              the flasher hub page (Rolling Clock section today, more to follow)
+index.html              Home page
+apps.html               Application Showcase (search/filter, cards, Premium, Support)
+styles.css              shared design system (light theme, glassmorphism, buttons, cards)
+app.js                  AOS/GSAP init + showcase search & category filtering
 manifests/
   premium-version.json  ESP Web Tools manifest for the Rolling Clock Premium Version build
   v2.json                ...for Premium v2
@@ -80,6 +119,16 @@ firmware/
   v2/firmware.merged.bin
   v3/firmware.merged.bin
 ```
+
+## Design system notes
+
+- Font: Inter (Google Fonts CDN). Colors/spacing/shadows are CSS custom properties at the top
+  of `styles.css` — change the palette by editing `:root` there.
+- Animation: [AOS](https://michalsnik.github.io/aos/) for scroll-reveal, [GSAP](https://gsap.com)
+  for the Home hero's entrance animation, both loaded via CDN (`unpkg`). No Three.js, Lottie, or
+  particles yet — the brief marks those "where useful"/"if appropriate," and a flasher catalog
+  with 3 cards didn't clearly need them; revisit once there's a larger, more visual catalog.
+- No build step, no framework (plain HTML/CSS/JS) — stays trivially GitHub Pages compatible.
 
 ## Caveats
 
